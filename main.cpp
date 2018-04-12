@@ -7,6 +7,13 @@
 
 using namespace std;
 
+void Start(int argc, char ** argv) {
+    QApplication app(argc, argv);
+    MainWindow window;
+    window.show();
+    app.exec();
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -100,7 +107,7 @@ void MainWindow::paintEvent(QPaintEvent * e) {
 }
 
 void MainWindow::keyPressEvent(QKeyEvent * e) {
-    cout << e->key() << endl;
+    //cout << e->key() << endl;
     this->update();
     if (e->key() == 81) {
         this->close();
@@ -120,25 +127,8 @@ void MainWindow::keyPressEvent(QKeyEvent * e) {
     } else if (e->key() == 16777237) {
         current_pos_y = min(max_height - height / size, current_pos_y + height / size / 3);
     }
-    /*
-     * TODO left right up down buttons
-     */
 }
 
-
-
 int main(int argc, char * argv[]) {
-    /*const char * s = "asdv";
-    char * const ss = "asdv";
-    char * p = "123";
-    s = p;
-    ss = "123";*/
-
-    srand(time(0));
-    QApplication app(argc, argv);
-    MainWindow window;
-
-    window.show();
-
-    return app.exec();
+    Start(argc, argv);
 }

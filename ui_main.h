@@ -62,9 +62,7 @@ public:
 };
 
 namespace Ui {
-    class MainWindow: public Ui_MainWindow, public QMainWindow
-    {
-    public:
+    class MainWindow: public Ui_MainWindow {
         MainWindow * ui;
     };
 } // namespace Ui
