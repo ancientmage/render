@@ -13,7 +13,6 @@
 #include "main.h"
 #include "ui_main.h"
 #include "client_sock.h"
-#include "server.h"
 
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
