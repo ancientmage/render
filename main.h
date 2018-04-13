@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QPainter>
+#include <QApplication>
 
 using namespace std;
 
@@ -90,5 +91,6 @@ public:
 private:
     Ui::MainWindow *ui;
 };
+
 
 #endif // MAIN_H
