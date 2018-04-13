@@ -1,5 +1,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <cstring>
 
 #include "client_sock.h"
 
@@ -13,7 +14,7 @@ ClientSock::ClientSock() {
 }
 
 ClientSock::ClientSock(int sock) {
-    sockfd = sock;
+    socket = sock;
     connected = true;
 }
 
@@ -34,17 +35,12 @@ int ClientSock::connect(string host, unsigned int port) {
     if(connected)
         disconnect();
 
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    /*struct timeval tv;
-    tv.tv_sec = 5;//5 Secs Timeout
-    tv.tv_usec = 0;//Not init'ing this can cause strange errors
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval));*/
-
-    enable_keepalive(sockfd);
+    enable_keepalive(socket);
 
     for(size_t i = 0; i < 3; i++) { //try to connect 3 times
-        if(::connect(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0)
+        if(::connect(socket, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0)
             cerr << "Error on connecting: " << errno << "  " << strerror(errno) << endl;
         else {
             connected = true;
@@ -57,12 +53,12 @@ int ClientSock::connect(string host, unsigned int port) {
 }
 
 bool ClientSock::hasError() {
-    if(sockfd == -1)
+    if(socket == -1)
         return true;
 
     int error = 0;
     socklen_t len = sizeof(error);
-    int retval = getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len);
+    int retval = getsockopt(socket, SOL_SOCKET, SO_ERROR, &error, &len);
 
     if(retval != 0 || error != 0)
         return true;
@@ -98,46 +94,23 @@ int ClientSock::disconnect() {
     if(!connected)
         return -1;
 
-    close(sockfd);
+    close(socket);
     connected = false;
 
     return 0;
 }
 
-int ClientSock::write(string mesg) {
+int ClientSock::write(const string& buffer) {
     if(!connected)
         return 1;
 
-    struct timeval tv;
-    tv.tv_sec = 10;
-    tv.tv_usec = 0;
-    fd_set writefds;
-    FD_ZERO(&writefds);
-    FD_SET(sockfd, &writefds);
+    if (socket == -1)
+        throw std::runtime_error("cant write buffer because of socket isnt initialized");
 
-    //cout << "w: " << mesg << endl;
+    int result = send(socket, buffer.c_str(), buffer.size() + 1, 0);
 
-    int sentBytes = 0;
-
-    for(size_t i = 0; i < mesg.length(); i += sentBytes) {
-        FD_ZERO(&writefds);
-        FD_SET(sockfd, &writefds);
-        int rv = select(sockfd + 1, NULL, &writefds, NULL, &tv);
-
-        if(rv == -1)
-            cerr << errno << "  " << strerror(errno) << endl;
-        else if(rv == 0)
-            sentBytes = 0;
-        else if(rv > 0 && FD_ISSET(sockfd, &writefds)) {
-            sentBytes = ::write(sockfd, mesg.substr(i, mesg.length() - i).c_str(), mesg.length() - i);
-
-            if(sentBytes == -1) {
-                cerr << "Error sending IDs: " << errno << "  " << strerror(errno) << endl;
-                return 1;
-            }
-        }
-    }
-
+    if (result == -1)
+        throw std::runtime_error("send failed");
     return 0;
 }
 
@@ -145,62 +118,11 @@ string ClientSock::read() {
     if(!connected)
         return "";
 
-    struct timeval tv;
-    tv.tv_sec = 10;
-    tv.tv_usec = 0;
-    fd_set readfds;
-    FD_ZERO(&readfds);
-    FD_SET(sockfd, &readfds);
+    int result = ::recv(socket, buffer, 1024, 0);
+    if (result == -1)
+        throw std::runtime_error("read failed");
 
-    string resp = "";
-    unsigned int n = 0;
-
-
-    do {
-        FD_ZERO(&readfds);
-        FD_SET(sockfd, &readfds);
-        int rv = select(sockfd + 1, &readfds, NULL, NULL, &tv);
-
-        if(rv <= -1)
-            cerr << errno << "  " << strerror(errno) << endl;
-        else if(rv == 0)
-            break;
-        else if(rv > 0 && FD_ISSET(sockfd, &readfds)) {
-
-            int tn = ::read(sockfd, recv, buffSize - 1);//avoid signcompare warning
-
-            if(tn > 0) {
-                n = tn;
-                recv[n] = '\0';
-                string tResp(recv, n);
-                resp += tResp;
-            }
-            else if(tn == -1) {
-                if(errno == 11) { //get the good part of the received stuff also if the connection closed during receive -> happens sometimes with short messages
-                    string tResp(recv);
-
-                    if(tResp.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890") == std::string::npos) //but only allow valid chars
-                        resp += tResp;
-                }
-                else
-                    cerr << errno << "  " << strerror(errno) << endl;
-
-                break;
-            }
-            else
-                break;
-
-        }
-        else
-            cerr << "ERROR: rv: " << rv << endl;
-
-    }
-    while(n >= buffSize - 1);
-
-    //if(resp != "")
-    //cout << "r: " << resp << endl;
-
-    return resp;
+    return std::string(buffer, result);
 }
 
 string ClientSock::readAll() {

@@ -32,7 +32,7 @@ class ClientSock {
     int connect(string host, unsigned int port);
     int disconnect();
 
-    int write(string mesg);
+    int write(const string & mesg);
     string read();
     string readAll();
 
@@ -46,9 +46,9 @@ class ClientSock {
     int enable_keepalive(int sock);
 
     static const unsigned int buffSize = 1000;
-    int sockfd;//establish connection to ID distribution server
+    int socket;//establish connection to ID distribution server
     struct sockaddr_in servaddr;
-    char recv[buffSize];
+    char buffer[buffSize];
     struct hostent* server;
 };
 
