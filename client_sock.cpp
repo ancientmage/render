@@ -28,7 +28,6 @@ int ClientSock::connect(string host, unsigned int port) {
     auto wVersionRequested = MAKEWORD(2, 2);
     WSADATA wsaData;
     WSAStartup(wVersionRequested, &wsaData);
-    std::cout << 1 << std::endl;
     ClientSock::host = host;
     ClientSock::port = port;
 
@@ -65,12 +64,10 @@ int ClientSock::connect(string host, unsigned int port) {
 int ClientSock::reconnect() {
     if (connected)
         return 0;
-    std::cout << 2 << std::endl;
 
     if (socket == -1)
         socket = ::socket(AF_INET, SOCK_STREAM, 0);
 
-    std::cout << 3 << std::endl;
 
     hostent * record = gethostbyname(host.c_str());
     in_addr * address = (in_addr * )record->h_addr;
@@ -81,16 +78,10 @@ int ClientSock::reconnect() {
         return reconnect();
     }
 
-    std::cout << 4 << std::endl;
-
-
     servaddr = { 0 };
     //memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(port);
-
-    std::cout << 5 << std::endl;
-
 
     inet_pton(AF_INET, ip_address.c_str(), &servaddr.sin_addr);
 
@@ -136,7 +127,7 @@ int ClientSock::write(const string& buffer) {
 string ClientSock::read() {
     if (!connected)
         return "";
-    const unsigned int buffSize = 1000;
+    const unsigned int buffSize = 1025;
 
     char buffer[buffSize];
     int result = ::recv(socket, buffer, 1024, 0);

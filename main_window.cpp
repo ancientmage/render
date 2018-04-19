@@ -17,38 +17,31 @@ MainWindow::MainWindow(QWidget *parent) :
     min_size = 8;
     width = 1280;
     height = 1080;
-    max_width = 1920;
-    max_height = 1080;
+    max_width = 1000;
+    max_height = 1000;
     current_pos_x = 0;
     current_pos_y = 0;
-    cell_types.assign(1920, vector<Type>(1080, NONE));
+    cell_types.assign(max_width, vector<Type>(max_height, UNDEFINED));
 
-    cell_types[5][5] = ALLY;
+    /*cell_types[5][5] = ALLY;
     cell_types[10][10] = ALLY;
     cell_types[15][15] = ENEMY;
     cell_types[10][15] = LAVA;
-    cell_types[15][10] = LAVA;
+    cell_types[15][10] = LAVA;*/
     init_types();
 }
 
 void MainWindow::init_types() {
     add_ally();
-    add_enemy();
     add_lava();
+    add_undefined();
     add_none();
-}
-
-void MainWindow::add_enemy() {
-    vector<vector<QRgb> > rgbs(size, vector<QRgb> (size, DARK_RED));
-    rgbs[1][2] = rgbs[2][3] = rgbs[6][2] = rgbs[5][3] = BLACK;
-    rgbs[3][6] = rgbs[4][6] = Qt::black;
-    cells.push_back(rgbs);
 }
 
 void MainWindow::add_ally() {
     vector<vector<QRgb> > rgbs(size, vector<QRgb> (size, GREEN));
     rgbs[2][2] = rgbs[1][3] = rgbs[5][2] = rgbs[6][3] = BLACK;
-    rgbs[3][6] = rgbs[4][6] = Qt::black;
+    rgbs[3][6] = rgbs[4][6] = BLACK;
     cells.push_back(rgbs);
 }
 
@@ -59,6 +52,11 @@ void MainWindow::add_lava() {
 
 void MainWindow::add_none() {
     vector<vector<QRgb> > rgbs(size, vector<QRgb> (size, WHITE));
+    cells.push_back(rgbs);
+}
+
+void MainWindow::add_undefined() {
+    vector<vector<QRgb> > rgbs(size, vector<QRgb> (size, BLACK));
     cells.push_back(rgbs);
 }
 
@@ -78,7 +76,6 @@ void MainWindow::drawCell(int x, int y, int type_ind, QImage & q) {
 }
 
 void MainWindow::paintEvent(QPaintEvent * e) {
-    cout << "key" << endl;
     QPainter painter(this);
     QImage q(width, height, QImage::Format_RGB32);
     q.fill(Qt::white);
@@ -96,11 +93,15 @@ void MainWindow::paintEvent(QPaintEvent * e) {
         }
     }
     painter.drawImage(0, 0, q);
+    //repaint();
 }
 
 void MainWindow::keyPressEvent(QKeyEvent * e) {
     //cout << e->key() << endl;
-    this->update();
+    this->repaint();
+    if (e == nullptr) {
+        return;
+    }
     if (e->key() == 81) {
         this->close();
         return;

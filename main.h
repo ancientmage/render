@@ -20,8 +20,8 @@ public:
 
     enum Type {
         ALLY,
-        ENEMY,
         LAVA,
+        UNDEFINED,
         NONE
     };
 
@@ -55,12 +55,13 @@ public:
     int type_to_ind(Type type) {
         if (type == ALLY)
             return 0;
-        if (type == ENEMY)
-            return 1;
         if (type == LAVA)
+            return 1;
+        if (type == UNDEFINED)
             return 2;
         if (type == NONE)
             return 3;
+        return -1;
     }
 
     ~MainWindow();
@@ -86,6 +87,7 @@ public:
     void add_enemy();
     void add_lava();
     void add_none();
+    void add_undefined();
     void init_types();
 
 private:
