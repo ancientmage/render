@@ -1,9 +1,10 @@
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <cstring>
+#include <ws2tcpip.h>
 
 #include "client_sock.h"
 
+#pragma comment(lib, "ws2_32.lib")
+#pragma warning( disable : 4996)
 
 ClientSock::ClientSock(string host, unsigned int port) {
     connect(host, port);
@@ -19,74 +20,79 @@ ClientSock::ClientSock(int sock) {
 }
 
 ClientSock::~ClientSock() {
-    //disconnect();
+    disconnect();
+    WSACleanup();
 }
 
 int ClientSock::connect(string host, unsigned int port) {
+    auto wVersionRequested = MAKEWORD(2, 2);
+    WSADATA wsaData;
+    WSAStartup(wVersionRequested, &wsaData);
     ClientSock::host = host;
     ClientSock::port = port;
 
-    bzero(&servaddr, sizeof(servaddr));
+    socket = -1;
+    return reconnect();
+    /*socket = ::socket(AF_INET, SOCK_STREAM, 0);
+
+    if (socket == -1) {
+        printf("socket failed with error: %ld\n", WSAGetLastError());
+        WSACleanup();
+        reconnect();
+    }
+
+    memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
-    server = gethostbyname(host.data());
-    bcopy((char*) server->h_addr, (char*) &servaddr.sin_addr.s_addr, server->h_length);
     servaddr.sin_port = htons(port);
 
-    if(connected)
-        disconnect();
+    inet_pton(AF_INET, host.c_str(), &servaddr.sin_addr);
 
-    socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-    enable_keepalive(socket);
-
-    for(size_t i = 0; i < 3; i++) { //try to connect 3 times
-        if(::connect(socket, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0)
-            cerr << "Error on connecting: " << errno << "  " << strerror(errno) << endl;
-        else {
+    for(int i = 0; i < 3; ++i) { //try to connect 3 times
+        if (::connect(socket, (struct sockaddr*) &servaddr, sizeof(servaddr)) >= 0) {
             connected = true;
             return 0;
         }
     }
-
+    if (!connected) {
+        std::cerr << "Cant connect to server\nTry to reconnect" << std::endl;
+        connect(host, port);
+    }
     connected = false;
-    return 1;
+    return 1;*/
 }
 
-bool ClientSock::hasError() {
-    if(socket == -1)
-        return true;
+int ClientSock::reconnect() {
+    if (connected)
+        return 0;
 
-    int error = 0;
-    socklen_t len = sizeof(error);
-    int retval = getsockopt(socket, SOL_SOCKET, SO_ERROR, &error, &len);
+    if (socket == -1)
+        socket = ::socket(AF_INET, SOCK_STREAM, 0);
 
-    if(retval != 0 || error != 0)
-        return true;
-    else
-        return false;
-}
+    if (socket == -1) {
+        printf("socket failed with error: %ld\n", WSAGetLastError());
+        Sleep(1000);
+        return reconnect();
+    }
 
-int ClientSock::enable_keepalive(int sock) {
-    int yes = 1;
+    servaddr = { 0 };
+    //memset(&servaddr, 0, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(port);
 
-    if(setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int)) == -1)
-        return -1;
+    inet_pton(AF_INET, host.c_str(), &servaddr.sin_addr);
 
-    int idle = 1;
+    if (::connect(socket, (struct sockaddr*) &servaddr, sizeof(servaddr)) >= 0) {
+        connected = true;
+        return 0;
+    }
 
-    if(setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(int)) == -1)
-        return -1;
-
-    int interval = 1;
-
-    if(setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(int)) == -1)
-        return -1;
-
-    int maxpkt = 10;
-
-    if(setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(int)) == -1)
-        return -1;
-
+    if (!connected) {
+        std::clog << "Cant connect to server\nTry to reconnect" << std::endl;
+        Sleep(1000);
+        return reconnect();
+    }
+    
+    connected = true;
     return 0;
 }
 
@@ -94,7 +100,7 @@ int ClientSock::disconnect() {
     if(!connected)
         return -1;
 
-    close(socket);
+    closesocket(socket);
     connected = false;
 
     return 0;
@@ -115,23 +121,14 @@ int ClientSock::write(const string& buffer) {
 }
 
 string ClientSock::read() {
-    if(!connected)
+    if (!connected)
         return "";
+    const unsigned int buffSize = 1000;
 
+    char buffer[buffSize];
     int result = ::recv(socket, buffer, 1024, 0);
     if (result == -1)
         throw std::runtime_error("read failed");
 
     return std::string(buffer, result);
-}
-
-string ClientSock::readAll() {
-    string full = read();
-
-    while(full.find("END") == string::npos)
-        full += read();
-
-    full = full.substr(0, full.find("END"));
-
-    return full;
 }

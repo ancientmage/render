@@ -7,49 +7,49 @@
 
 #include <errno.h>
 #include <string.h>
+#include <WinSock2.h>
 
-#include <strings.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <sys/signal.h>
 
 using namespace std;
 
 class ClientSock {
-  public:
+public:
     ClientSock(string host, unsigned int port);
     ClientSock();
     ClientSock(int sock);
     ~ClientSock();
 
-    bool hasError();
     int connect(string host, unsigned int port);
+    int reconnect();
     int disconnect();
 
     int write(const string & mesg);
     string read();
-    string readAll();
 
     string host;
     unsigned int port;
     bool connected;
 
-  protected:
-
-  private:
-    int enable_keepalive(int sock);
-
-    static const unsigned int buffSize = 1000;
-    int socket;//establish connection to ID distribution server
+private:
+    int socket;
     struct sockaddr_in servaddr;
-    char buffer[buffSize];
     struct hostent* server;
+};
+
+class Client {
+    ClientSock socket;
+
+public:
+    Client() = delete;
+    Client(const std::string & host, unsigned int port) { socket.connect(host, port); }
+    ~Client() { socket.disconnect(); };
+
+    //void connection(const std::string & host, unsigned int port) { socket.connect(host, port); }
+
+    int write(const std::string & buffer) { return socket.write(buffer); }
+    std::string read() { return socket.read(); }
 };
 
 #endif // CLIENTSOCK_H
