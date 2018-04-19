@@ -15,10 +15,13 @@ CONFIG += c++14
 
 SOURCES += main.cpp \
     main_window.cpp \
-    client_sock.cpp
+    client_sock.cpp \
+    backend.cpp
 
-HEADERS  += main.h \
+HEADERS  += \
     ui_main.h \
-    client_sock.h
+    client_sock.h \
+    main_window.h \
+    backend.h
 
 FORMS    += main.ui

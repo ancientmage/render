@@ -90,6 +90,9 @@ public:
     void add_undefined();
     void init_types();
 
+public slots:
+    void upd(){this->repaint();}
+
 private:
     Ui::MainWindow *ui;
 };

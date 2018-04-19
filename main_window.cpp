@@ -1,9 +1,11 @@
-#include "main.h"
+#include "main_window.h"
 #include "ui_main.h"
+#include "backend.h"
+
 #include <QPainter>
+#include <QThread>
 #include <iostream>
 #include <QGraphicsWidget>
-//#include <unistd.h>
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -23,12 +25,22 @@ MainWindow::MainWindow(QWidget *parent) :
     current_pos_y = 0;
     cell_types.assign(max_width, vector<Type>(max_height, UNDEFINED));
 
+    init_types();
+
+    QThread *thread = new QThread(this);
+    Backend *updater = new Backend(this);
+    updater->moveToThread(thread);
+    connect(updater, SIGNAL(redrawUI()), this, SLOT(upd()));
+    connect(thread, SIGNAL(destroyed()), updater, SLOT(deleteLater()));
+    connect(thread, SIGNAL (started()), updater, SLOT (process()));
+
+    thread->start();
+
     /*cell_types[5][5] = ALLY;
     cell_types[10][10] = ALLY;
     cell_types[15][15] = ENEMY;
     cell_types[10][15] = LAVA;
     cell_types[15][10] = LAVA;*/
-    init_types();
 }
 
 void MainWindow::init_types() {
@@ -93,7 +105,6 @@ void MainWindow::paintEvent(QPaintEvent * e) {
         }
     }
     painter.drawImage(0, 0, q);
-    //repaint();
 }
 
 void MainWindow::keyPressEvent(QKeyEvent * e) {
