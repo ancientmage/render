@@ -3,7 +3,7 @@
 #include <QPainter>
 #include <iostream>
 #include <QGraphicsWidget>
-#include <unistd.h>
+//#include <unistd.h>
 
 
 MainWindow::MainWindow(QWidget *parent) :

@@ -46,9 +46,10 @@ public:
     Client(const std::string & host, unsigned int port) { socket.connect(host, port); }
     ~Client() { socket.disconnect(); };
 
-    //void connection(const std::string & host, unsigned int port) { socket.connect(host, port); }
+    int write(const std::string & buffer) {
+        return socket.write(buffer + "\n");
+    }
 
-    int write(const std::string & buffer) { return socket.write(buffer); }
     std::string read() { return socket.read(); }
 };
 

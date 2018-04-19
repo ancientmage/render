@@ -28,6 +28,7 @@ int ClientSock::connect(string host, unsigned int port) {
     auto wVersionRequested = MAKEWORD(2, 2);
     WSADATA wsaData;
     WSAStartup(wVersionRequested, &wsaData);
+    std::cout << 1 << std::endl;
     ClientSock::host = host;
     ClientSock::port = port;
 
@@ -64,22 +65,34 @@ int ClientSock::connect(string host, unsigned int port) {
 int ClientSock::reconnect() {
     if (connected)
         return 0;
+    std::cout << 2 << std::endl;
 
     if (socket == -1)
         socket = ::socket(AF_INET, SOCK_STREAM, 0);
 
+    std::cout << 3 << std::endl;
+
+    hostent * record = gethostbyname(host.c_str());
+    in_addr * address = (in_addr * )record->h_addr;
+    string ip_address = inet_ntoa(* address);
     if (socket == -1) {
         printf("socket failed with error: %ld\n", WSAGetLastError());
         Sleep(1000);
         return reconnect();
     }
 
+    std::cout << 4 << std::endl;
+
+
     servaddr = { 0 };
     //memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(port);
 
-    inet_pton(AF_INET, host.c_str(), &servaddr.sin_addr);
+    std::cout << 5 << std::endl;
+
+
+    inet_pton(AF_INET, ip_address.c_str(), &servaddr.sin_addr);
 
     if (::connect(socket, (struct sockaddr*) &servaddr, sizeof(servaddr)) >= 0) {
         connected = true;
@@ -113,7 +126,7 @@ int ClientSock::write(const string& buffer) {
     if (socket == -1)
         throw std::runtime_error("cant write buffer because of socket isnt initialized");
 
-    int result = send(socket, buffer.c_str(), buffer.size() + 1, 0);
+    int result = send(socket, buffer.c_str(), buffer.size(), 0);
 
     if (result == -1)
         throw std::runtime_error("send failed");

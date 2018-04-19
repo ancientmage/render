@@ -5,10 +5,20 @@
 
 using namespace std;
 
-int main(int _argc, char * _argv[]) {
-    Client client("127.0.0.1", 8080);
-    string s = client.read();
-    client.write("hello from client\n");
-    cout << "take from server : " << s << endl;
-    getchar();
+int main(/*int _argc, char * _argv[]*/) {
+    Client client("tr.contest.pizza", 10000);
+    string s;
+
+    s = client.read();
+    cout << "take from server : " << s;
+    client.write("team42");
+
+    s = client.read();
+    cout << "take from server : " << s;
+    client.write("9e1b5878f4");
+
+    s = client.read();
+    cout << "take from server : " << s;
+
+    return 0;
 }
