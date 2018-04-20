@@ -1,20 +1,21 @@
 #ifndef BACKEND_H
 #define BACKEND_H
 
-#include <QApplication>
-#include "main_window.h"
+#include <QObject>
+#include "vizualizer.h"
 
 class Backend : public QObject
 {
     Q_OBJECT
 public:
-    explicit Backend(MainWindow * w);
+    explicit Backend(Vizualizer * w);
 
-    void clientThread();
+    virtual void onKeyPressed(long long code);
+
 private:
     void redraw();
 
-    MainWindow * window;
+    Vizualizer * window;
 public slots:
     void process();
 signals:

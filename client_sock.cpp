@@ -1,5 +1,5 @@
 #include <cstring>
-#include <ws2tcpip.h>
+//#include <ws2tcpip.h>
 
 #include "client_sock.h"
 

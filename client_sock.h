@@ -8,7 +8,7 @@
 
 #include <errno.h>
 #include <string>
-#include <WinSock2.h>
+//#include <WinSock2.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>

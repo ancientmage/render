@@ -7,7 +7,6 @@
 
 #include "main_window.h"
 #include "ui_main.h"
-#include "client_sock.h"
 
 using namespace std;
 

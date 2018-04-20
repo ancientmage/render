@@ -13,15 +13,20 @@ TEMPLATE = app
 
 CONFIG += c++14
 
+LIBS += -L/usr/lib/x86_64-linux-gnu/ \
+  -lboost_system
+
 SOURCES += main.cpp \
     main_window.cpp \
-    client_sock.cpp \
-    backend.cpp
+    backend.cpp \
+    controller.cpp \
+    vizualizer.cpp
 
 HEADERS  += \
     ui_main.h \
-    client_sock.h \
     main_window.h \
-    backend.h
+    backend.h \
+    controller.h \
+    vizualizer.h
 
 FORMS    += main.ui
